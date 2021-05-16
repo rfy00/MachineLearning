@@ -1,4 +1,4 @@
-<b><i>Intro</i></b> - Public companies sell stocks on stock markets so that investors can invest their money in a company, their profits, and have voter rights at shareholder meetings.  It is one way a person can build wealth and companies can raise money for products, services, and other initiatives.  A person can buy or sell a company’s stock for either a profit or loss (O’Shea, 2020).  
+<b><i>Intro</i></b> - Public companies sell stocks on stock markets so that investors can invest their money in a company, their profits, and have voter rights at shareholder meetings.  It is one way a person can build wealth and companies can raise money for products, services, and other initiatives.  A person can buy or sell a company’s stock for either a profit or loss (O’Shea, 2020) https://www.nerdwallet.com/article/investing/what-are-stocks-how-they-work  
 
 Stocks can have high returns, but they also have risks if the price goes down due to unforeseen circumstances 
    - Good or bad news that was made public about a company
