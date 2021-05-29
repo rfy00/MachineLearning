@@ -1,0 +1,365 @@
+---
+title: 'COVID Vaccine Twitter Tweets'
+date: "May 2021"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+  word_document: default
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction  
+COVID Vaccine Twitter Tweets Intro  
+  
+ 
+## Preparation   
+The following R libraries will be used: 
+ - library(rtweet)  
+ - library(ggplot2)  
+ - library(dplyr)  
+ - library(tidytext)  
+ - library(igraph)  
+ - library(ggraph)  
+  
+
+## Dataset 
+  Describe dataset  
+  
+
+```{r}
+library(rtweet)  
+library(ggplot2)  
+library(dplyr)  
+library(tidytext)  
+library(igraph)  
+library(ggraph) 
+library(widyr)
+library(tidyr)
+library(wordcloud)
+library(syuzhet)
+
+```
+
+```{r}
+# Twitter app name
+#appname <- "(application name)"
+
+# Twitter API Key - This is where you would add your key 
+#key <- "(Twitter API key)"
+
+# API Secret, Access_Token, and Access_Secret - Twitter provided
+#secret <- "(API Secret)"
+#access_token <- "(Access_Token)"
+#access_secret <- "(Access_Secret)"
+
+# Variable that groups all of the API passwords together
+#twitter_token <- create_token(
+#  app = appname,
+#  consumer_key = key,
+#  consumer_secret = secret,
+#  access_token = access_token,
+#  access_secret = access_secret)
+
+# twitter_tweets <- search_tweets(q = "covid vaccine", n = 18000, include_rts=FALSE, lang="en", )
+
+#glimpse(twitter_tweets)
+# head(10)
+```
+```{r}
+
+# Prints out the dataset
+twitter_tweets
+
+# Writes the data to a CSV file
+write_as_csv(twitter_tweets, "~/Desktop/DSC 680/Week7/TwitterTweetsDataset.csv", prepend_ids = TRUE, na = "", fileEncoding = "UTF-8")
+
+```
+
+```{r}
+
+# Prints out the various useful tweet information into separate datasets
+usefultweetinfo = subset(twitter_tweets, select = c('screen_name','text','source','location','description','followers_count','friends_count','account_created_at'))
+
+screennamedf = subset(twitter_tweets, select = c('screen_name'))
+
+textdf = subset(twitter_tweets, select = c('text'))
+
+locationdf = subset(twitter_tweets, select = c('location'))
+
+sourcedf = subset(twitter_tweets, select = c('source'))
+
+```
+
+```{r}
+
+# Only selects the text of the tweet and assigns to dftext
+dftext <- subset(textdf, select = c('text'))
+  
+# Removes any non-distinct text
+dftext2 <- dftext %>% distinct()
+
+# Prints the dataframe
+head(dftext2)
+
+```
+```{r}
+
+# Assigns dftext2 to covid_tweets
+covid_tweets <- dftext2
+
+# Cleans the covid_tweets dataframe
+covid_tweets$text <- gsub("http.*","", covid_tweets$text)
+covid_tweets$text <- gsub("https.*","", covid_tweets$text)
+covid_tweets$text <- gsub("&amp","", covid_tweets$text)
+covid_tweets$text <- gsub("@\\w+", " ", covid_tweets$text)
+covid_tweets$text <- gsub("[[:punct:]]", " ", covid_tweets$text)
+covid_tweets$text <- gsub("[ \t]{2,}", " ", covid_tweets$text)
+covid_tweets$text <- gsub("^\\s+|\\s+$", "", covid_tweets$text)
+
+# Prints the cleaned text
+covid_tweets
+```
+
+```{r}
+# note the words that are recognized as unique by R
+a_list_of_words <- c("covid", "vaccine", "age", "johnson ", "doses", "information", "Pfizer", "Corona", ",")
+
+# Cleans the covid_tweets dataset and assigns to covid_tweets_clean
+covid_tweets_clean <- covid_tweets %>%
+  dplyr::select(text) %>%
+  unnest_tokens(word, text)
+
+# Prints out the dataset
+covid_tweets_clean
+```
+```{r}
+
+# Plots the covid_tweets_clean and counts the number of unique words
+covid_tweets_clean %>%
+  count(word, sort = TRUE) %>%
+  top_n(15) %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(x = word, y = n)) +
+  geom_col() +
+  xlab(NULL) +
+  coord_flip() +
+  labs(x = "Count",
+       y = "Unique words",
+       title = "Count of unique words found in tweets")
+```
+```{r}
+
+# Removes the stop words
+data("stop_words")
+head(stop_words)
+
+# Shows the number of rows
+nrow(covid_tweets_clean)
+
+```
+```{r}
+
+# Removes stop words
+cleaned_tweet_words <- covid_tweets_clean %>%
+  anti_join(stop_words)
+
+# Shows the number of rows
+nrow(cleaned_tweet_words)
+
+# Prints out the words
+cleaned_tweet_words
+
+```
+
+```{r}
+
+# Plots the cleaned_tweet_words and counts the number of unique words
+cleaned_tweet_words %>%
+  count(word, sort = TRUE) %>%
+  top_n(15) %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(x = word, y = n)) +
+  geom_col() +
+  xlab(NULL) +
+  coord_flip() +
+  labs(y = "Count",
+       x = "Unique words",
+       title = "Count of unique words found in tweets",
+       subtitle = "Stop words removed from the list")
+
+```
+
+```{r}
+
+# Pairs the words
+covid_tweets_paired_words <- covid_tweets %>%
+  dplyr::select(text) %>%
+  unnest_tokens(paired_words, text, token = "ngrams", n = 2)
+
+# Sorts the paired words
+covid_tweets_paired_words %>%
+  count(paired_words, sort = TRUE)
+
+# Separates the paired words
+covid_tweets_separated_words <- covid_tweets_paired_words %>%
+  separate(paired_words, c("word1", "word2"), sep = " ")
+
+
+```
+
+```{r}
+
+# Separates word1 and word2
+covid_tweets_separated_words <- covid_tweets_paired_words %>%
+  separate(paired_words, c("word1", "word2"), sep = " ")
+
+# Removes the stop words
+covid_tweets_filtered <- covid_tweets_separated_words %>%
+  filter(!word1 %in% stop_words$word) %>%
+  filter(!word2 %in% stop_words$word)
+
+# Counts the words in word1 and word2
+covid_words_counts <- covid_tweets_filtered %>%
+  count(word1, word2, sort = TRUE)
+
+# Prints the data
+head(covid_words_counts)
+
+```
+```{r}
+
+# Plots the covid_word_counts in a Work Network 
+covid_words_counts %>%
+  filter(n >= 60) %>%
+  graph_from_data_frame() %>%
+  ggraph(layout = "fr") +
+  geom_edge_link(aes(edge_alpha = n, edge_width = n)) +
+  geom_edge_link(aes(edge_alpha = n, edge_width = n)) +
+  geom_edge_link(arrow = arrow(length = unit(2, 'mm'))) +
+  geom_node_point(color = "darkslategray4", size = 3) +
+  geom_node_text(aes(label = name), vjust = 1.8, size = 3) +
+  labs(title = "Word Network: Tweets using the keyword- COVID Vaccine",
+       subtitle = "Text mining twitter data ", x = "", y = "")
+
+```
+```{r}
+
+# Pairs the words together
+covid_tweets_source_paired_words <- sourcedf %>%
+  dplyr::select(source) %>%
+  unnest_tokens(paired_words, source, token = "ngrams", n = 2)
+
+# Counts the word1 and word2 fields
+covid_tweets_source_paired_words %>%
+  count(paired_words, sort = TRUE)
+
+# Separates the words
+covid_tweets_source_separated_words <- covid_tweets_source_paired_words %>%
+  separate(paired_words, c("word1", "word2"), sep = " ")
+
+```
+```{r}
+
+# Separates the words
+covid_source_tweets_separated_words <- covid_tweets_source_paired_words %>%
+  separate(paired_words, c("word1", "word2"), sep = " ")
+
+# Removes the stop words
+covid_tweets_source_filtered <- covid_tweets_source_separated_words %>%
+  filter(!word1 %in% stop_words$word) %>%
+  filter(!word2 %in% stop_words$word)
+
+# Counts the word1 and word2 fields
+covid_source_words_counts <- covid_tweets_source_filtered %>%
+  count(word1, word2, sort = TRUE)
+
+# Prints the dataframe out
+head(covid_source_words_counts)
+
+```
+```{r}
+
+# Plots the covid_source_word_counts in a Work Network (Source is the device used to Tweet)
+covid_source_words_counts %>%
+  filter(n >= 24) %>%
+  graph_from_data_frame() %>%
+  ggraph(layout = "fr") +
+  geom_edge_link(aes(edge_alpha = n, edge_width = n)) +
+  geom_edge_link(aes(edge_alpha = n, edge_width = n)) +
+  geom_edge_link(arrow = arrow(length = unit(2, 'mm'))) +
+  geom_node_point(color = "darkslategray4", size = 1.5) +
+  geom_node_text(aes(label = name), vjust = 1.8, size = 3) +
+  labs(title = "Word Network: Tweets using the Source",
+       subtitle = "Text mining twitter data ", x = "", y = "")
+
+```
+
+```{r}
+
+# Shows the counts of the screen name
+covid_screenname_words_counts <- screennamedf %>% count(screen_name, sort = TRUE)
+
+covid_screenname_words_counts 
+
+```
+
+```{r}
+
+# Plots the covid_screenname_words_counts
+ggplot(covid_screenname_words_counts, aes(x = screen_name, y = n)) +
+    geom_point(aes(color = factor(n))) +
+    xlab("Screen_name")+ylab("Count")+
+    ggtitle("Twitter Screen Name Counts")
+
+```
+
+
+```{r}
+
+#generate wordcloud for the word1 and word2
+
+wordcloud(covid_words_counts$word1,min.freq = 10,colors=brewer.pal(8, "Dark2"),random.color = TRUE,max.words = 250)
+
+wordcloud(covid_words_counts$word2,min.freq = 10,colors=brewer.pal(8, "Dark2"),random.color = TRUE,max.words = 250)
+
+```
+```{r}
+
+# Sentimental Analysis
+# Converts the cleaned_tweet_words to ASCII
+sa <- iconv(cleaned_tweet_words, from="UTF-8", to="ASCII", sub="")
+
+# Assigns the SA dataset to the various sentiment values that the syuzhet libary uses
+ew_sentiment<-get_nrc_sentiment((sa))
+sentimentscores<-data.frame(colSums(ew_sentiment[,]))
+
+# Assigns sentiment scores to each row of data
+names(sentimentscores) <- "Score"
+sentimentscores <- cbind("sentiment"=rownames(sentimentscores),sentimentscores)
+rownames(sentimentscores) <- NULL
+
+# Plots the sentiment and the score on a graphs
+ggplot(data=sentimentscores,aes(x=sentiment,y=Score))+
+  geom_bar(aes(fill=sentiment),stat = "identity")+
+  theme(legend.position="none")+
+  xlab("Sentiments")+ylab("Scores")+
+  ggtitle("Sentimental Analysis Based on Scores")+
+  theme_minimal()
+
+```
+```{r}
+# Prints out the various pieces of data that goes into the chart Sentiment Chart above
+
+sentiments
+sentimentscores
+ew_sentiment
+
+```
+
+
+#
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
