@@ -7,7 +7,7 @@ COVID-19 vaccines have been a hot topic at the end of 2020 and into 2021.  Findi
 
 <b><i>Tools</i></b> - R, CSV, PowerPoint, Word
 
-<b><i>Tools</i></b> - The dataset I used is Twitter tweets that are not included in retweets.  Twitter only allows a person to download up to 18,000 records at a time every 15 minutes.  Without a Twitter subscription, the data only goes back 8 days.  There are a lot of fields that Twitter stores information for.  The fields I mainly used to review the tweets are screen_name, text (tweet), source (what device was used to tweet), location, followers_count, friends_count, and account_created_at.  
+<b><i>Data</i></b> - The dataset I used is Twitter tweets that are not included in retweets.  Twitter only allows a person to download up to 18,000 records at a time every 15 minutes.  Without a Twitter subscription, the data only goes back 8 days.  There are a lot of fields that Twitter stores information for.  The fields I mainly used to review the tweets are screen_name, text (tweet), source (what device was used to tweet), location, followers_count, friends_count, and account_created_at.  
 
 <b><i>Methods/Evaluation/Techniques</i></b> - I cleaned the almost 18,000 records of Twitter tweets, summarized the data, created charts/graphs, completed a word cloud, and utilized machine learning in sentimental analysis.
 
